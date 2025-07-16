@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice Fraud Detection</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+      background-color: #f9f9f9;
+    }
+    h2 {
+      color: #333;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      display: none;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>📄 Upload Invoice PDF</h2>
+
+  <form id="pdfForm">
+    <input type="file" id="pdfFile" accept="application/pdf" required />
+    <br />
+    <button type="submit">Upload & Predict</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('pdfForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const fileInput = document.getElementById('pdfFile');
+      if (!fileInput.files.length) return;
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = '⏳ Processing...';
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/predict-pdf', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          resultDiv.innerHTML = `<p class="error">❌ ${data.error}</p>`;
+        } else {
+          resultDiv.innerHTML = `
+            <p class="success">✅ <strong>${data.meaning}</strong></p>
+            <p><strong>Extracted:</strong> ${JSON.stringify(data.extracted)}</p>
+          `;
+        }
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="error">❌ Request failed: ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
